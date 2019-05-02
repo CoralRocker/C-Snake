@@ -7,6 +7,7 @@
 #include <sys/types.h>
 #include <sys/time.h>
 
+/* Method to initialize NCurses for the program */
 WINDOW *initCurses()
 {
 	initscr();
@@ -24,35 +25,50 @@ WINDOW *initCurses()
 
 int main()
 {
+	/* Init NCurses */
 	WINDOW* stdscr = initCurses();
+	
+	/* Init Snake */
 	Snake snake = initSnake(stdscr, 3);
 	setSegment(&snake, 0, 10, 3);
 	setSegment(&snake, 1, 10, 2);
 	setSegment(&snake, 2, 10, 1);
+	
+	/* Init Food */
+	Food food = initFood(stdscr, 3);
+	for(uint8_t i = 0; i < 3; i++)
+		setFoodRand(&food, i);
+
+	/* Game Speed Values */
 	const uint8_t MPS = 20;
 	const uint8_t FPMS = 1000/MPS;
 	struct timeval tv;
 	uint64_t start, end;
-	int16_t move = KEY_DOWN;
-	uint16_t score = 0;
-	Food food = initFood(stdscr, 3);
-	for(int i = 0; i < 3; i++)
-		setFoodRand(&food, i);
 	gettimeofday(&tv, NULL);
 	start = tv.tv_sec * 1000 + tv.tv_usec/1000;
+
+	/* Game Movement and Scores */
+	int16_t move = KEY_DOWN;
+	uint16_t score = 0;
+	int16_t c = 0x00;
+	int16_t foodCollision = -1;
+
+	/* Game Loop */
 	while(1)
 	{
+		/* Calculate current time */
 		gettimeofday(&tv, NULL);
 		end = tv.tv_sec * 1000 + tv.tv_usec/1000;
+
+		/* Check if it is time to rerun game loop */
 		if(end - start >= FPMS)
 		{
-			int16_t c = getch();
-			if(c == 'q')
+			/* Movement Cases */
+			c = getch(); //Get key press
+			if(c == 'q' || c == 'Q') // Exit case 
 				break;
-			if(c == '1')
-				incrementSnake(&snake);
-			if(c != ERR)
-				switch(c)
+			if(c != ERR) // Check movements
+				switch(c) // Check for illegal moves
 				{
 					case KEY_DOWN:
 						move = (move != KEY_UP) ? KEY_DOWN : KEY_UP;
@@ -67,11 +83,13 @@ int main()
 						move = (move != KEY_LEFT) ? KEY_RIGHT : KEY_LEFT;
 						break;
 				}
+
+			/* Move snake, draw food, get collisions */
 			moveSnake(&snake, move);
 			drawSnake(&snake);
 			eraseFood(&food);
 			drawFood(&food);
-			int16_t foodCollision = isIn(&food, snake.body[0].x, snake.body[0].y);
+			foodCollision = isIn(&food, snake.body[0].x, snake.body[0].y);
 			if(foodCollision != -1)
 			{
 				setFoodRand(&food, foodCollision);
@@ -82,9 +100,13 @@ int main()
 			{
 				break;
 			}
+			
+			/* Reset Clock */
 			start = end;
 		}
 	}
+	/* Release Memory */
 	freeSnake(&snake);
+	freeFood(&food);
 	endwin();
 }

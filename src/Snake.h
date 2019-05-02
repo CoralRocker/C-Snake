@@ -4,25 +4,34 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+
+/* Structs */
+/* Struct for inidividual snake segment. Helps keep Snake struct orderly */
 typedef struct SnakeSegment {
-	uint16_t x, y;
+	uint16_t x, y; // X and Y coordinates of segment
 } SnakeSegment;
 
+/* Struct for snake itself. */
 typedef struct Snake {
-	SnakeSegment *body;
-	WINDOW* win;
-	uint16_t size;
-	uint16_t win_h, win_w;
+	SnakeSegment *body; // Array of SnakeSegments. 
+	WINDOW* win; // Window to write to
+	uint16_t size; // Size of snake, equal to amount of segments in body pointer
+	uint16_t win_h, win_w; // Width and height of window
 } Snake;
 
+/* Method to create a basic snake. 
+ * Returns a snake with given size, and no segments initialized 
+ */
 Snake initSnake(WINDOW *win, uint16_t size)
 {
+	/* Create Snake */
 	Snake s = {
 		(SnakeSegment*)malloc(sizeof(SnakeSegment)*size),
 		win,
 		size
 		};
 	
+	/* Set window height and width appropriately */
 	if(win == NULL)
 	{
 		s.win_h = 0;
@@ -33,11 +42,13 @@ Snake initSnake(WINDOW *win, uint16_t size)
 	return s;
 }
 
+/* Since Snakes use malloc to allocate memory for itself, it must be freed */
 void freeSnake(Snake* s)
 {
 	free(s->body);
 }
 
+/* Sets a given snake segment to a given set of x and y values */
 int setSegment(Snake *s, uint16_t index, uint16_t x, uint16_t y)
 {
 	if(index < s->size && index >= 0)
@@ -51,6 +62,9 @@ int setSegment(Snake *s, uint16_t index, uint16_t x, uint16_t y)
 	}
 }
 
+/* Increases the size of the snake by creating a temporary snake, copying actual snake into
+ * it, then freeing and recreating actual snake. Is memory leak free, so long as snake is initialized with initSnake().
+ */
 void incrementSnake(Snake *s)
 {
 	Snake temp = initSnake(NULL, s->size);
@@ -64,6 +78,7 @@ void incrementSnake(Snake *s)
 	freeSnake(&temp);
 }	
 
+/* Print snake to given window */
 void drawSnake(Snake *s)
 {
 	for(uint16_t i = 0; i < s->size; i++)
@@ -75,12 +90,14 @@ void drawSnake(Snake *s)
 	}
 }
 
+/* Remove snake from window */
 void eraseSnake(Snake *s)
 {
 	for(uint16_t i = 0; i < s->size; i++)
 		mvwaddch(s->win, s->body[i].y, s->body[i].x, ' ');
 }
 
+/* Given a 16-bit move, adjust the snake's position appropriately */
 void moveSnake(Snake *s, uint16_t dir)
 {
 	eraseSnake(s);
@@ -96,20 +113,12 @@ void moveSnake(Snake *s, uint16_t dir)
 				s->body[0].y = 1;
 				break;
 			}
-			if(s->body[0].y + 1 == s->body[1].y)
-			{
-				break;	
-			}
 			s->body[0].y++;
 			break;
 		case KEY_UP:
 			if(s->body[0].y - 1 < 0)
 			{
 				s->body[0].y = s->win_h;
-				return;
-			}
-			if(s->body[0].y - 1 == s->body[1].y)
-			{
 				return;
 			}
 			s->body[0].y--;
@@ -120,10 +129,6 @@ void moveSnake(Snake *s, uint16_t dir)
 				s->body[0].x = 1;
 				break;
 			}
-			if(s->body[0].x + 1 == s->body[1].x)
-			{
-				break;
-			}
 			s->body[0].x++;
 			break;
 		case KEY_LEFT:
@@ -132,17 +137,13 @@ void moveSnake(Snake *s, uint16_t dir)
 				s->body[0].x = s->win_w - 1;
                 		break;
                 	}
-                	if(s->body[0].x - 1 == s->body[1].x)
-			{
-				break;
-			}
 			s->body[0].x--;
                 	break;
 	}
 }
 
 
-
+/* Is used to check if snake has collided with something */
 uint8_t collideSnake(Snake *s, uint8_t death_walls)
 {
 	if(death_walls)
