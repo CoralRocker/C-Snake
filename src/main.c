@@ -41,8 +41,8 @@ int main()
 		setFoodRand(&food, i);
 
 	/* Game Speed Values */
-	const uint8_t MPS = 20;
-	const uint8_t FPMS = 1000/MPS;
+	uint8_t MPS = 20;
+	uint8_t FPMS = 1000/MPS;
 	struct timeval tv;
 	uint64_t start, end;
 	gettimeofday(&tv, NULL);
@@ -53,6 +53,34 @@ int main()
 	uint16_t score = 0;
 	int16_t c = 0x00;
 	int16_t foodCollision = -1;	
+
+	/* Game Menu */
+	Menu m = initMenu(stdscr, 3);
+	menuAddOpts(&m, 4, "Easy", "Medium", "Hard", "Quit");
+	uint16_t option = runMenu(&m);
+	switch(option)
+	{
+		case 0:
+			MPS = 10;
+			FPMS = 1000/MPS;
+			break;
+		case 1:
+			MPS = 20;
+			FPMS = 1000/MPS;
+			break;
+		case 2:
+			MPS = 30;
+			FPMS = 1000/MPS;
+			break;
+		case 3:
+			freeSnake(&snake);
+			freeFood(&food);
+			freeMenu(&m);
+			endwin();
+			_nc_free_and_exit();
+			return 0;
+	}
+	freeMenu(&m);
 
 	/* Game Loop */
 	while(1)
@@ -96,6 +124,11 @@ int main()
 				setFoodRand(&food, foodCollision);
 				incrementSnake(&snake);
 				score++;
+				if(score % 2 == 0)
+				{
+					MPS += 1;
+					FPMS = 1000/MPS;
+				}
 			}
 			if(collideSnake(&snake, 0))
 			{
