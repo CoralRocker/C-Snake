@@ -6,6 +6,7 @@
 #include "Food.h"
 #include <sys/types.h>
 #include <sys/time.h>
+#include "Menu.h"
 
 /* Method to initialize NCurses for the program */
 WINDOW *initCurses()
@@ -51,7 +52,7 @@ int main()
 	int16_t move = KEY_DOWN;
 	uint16_t score = 0;
 	int16_t c = 0x00;
-	int16_t foodCollision = -1;
+	int16_t foodCollision = -1;	
 
 	/* Game Loop */
 	while(1)
