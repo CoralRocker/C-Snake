@@ -7,6 +7,7 @@
 #include <sys/types.h>
 #include <sys/time.h>
 #include "Menu.h"
+#include <string.h>
 
 /* Method to initialize NCurses for the program */
 WINDOW *initCurses()
@@ -24,7 +25,59 @@ WINDOW *initCurses()
 	return stdscr;
 }
 
-int main()
+void endScreen(WINDOW* win, uint16_t score, char* fileName)
+{
+	/* Score Show */
+	werase(win);
+	uint16_t h, w;
+	getmaxyx(win, h, w);
+	mvwprintw(win, h/2, w/2 - 15, "Congratulations! You got %d points!", score);
+	nodelay(win, FALSE);
+	getch();
+	werase(win);
+
+	/* Scoreboard Show */
+	ScoreArray scores = initScoreArray(fileName, 5);
+	readScore(&scores);
+	char *strBuf = (char*)malloc(sizeof(char)*256);
+	for(uint8_t i = 0; i < scores.size; i++)
+	{
+		memset(strBuf, 0x00, 256);
+		sprintf(strBuf, "%d: %s -- %dpts", i, scores.arr[i].name, scores.arr[i].score);
+		mvwaddstr(win, h/2+i, w/2 - strlen(strBuf)/2, strBuf);
+	}
+	getch();
+	werase(win);
+
+	/* Add Score */
+	uint8_t rank = rankScore(&scores, score);
+	if(rank < scores.size)
+	{
+		sprintf(strBuf, "Congratulations! You got %d place!", rank + 1);
+		mvwaddstr(win, h/2, w/2 - strlen(strBuf)/2, strBuf);
+		refresh();
+		mvwaddstr(win, h/2 + 1, w/2 - 8, "Enter Your Name: ");
+		echo();
+		memset(strBuf, 0x00, 256);
+		getnstr(strBuf, 255);
+		sprintf(strlen(strBuf) + strBuf, 0x00);
+		werase(win);
+		insertScore(&scores, rank, score, strBuf, strlen(strBuf));
+		mvwaddstr(win, h/2-1, w/2 - strlen(strBuf), strBuf);
+		for(uint8_t i = 0; i < scores.size; i++)
+		{
+			memset(strBuf, 0x00, 256);
+			sprintf(strBuf, "%d: %s -- %dpts", i, scores.arr[i].name, scores.arr[i].score);
+			mvwaddstr(win, h/2+i, w/2 - strlen(strBuf)/2, strBuf);
+		}
+		getch();
+		werase(win);
+	}
+	freeScoreArray(&scores);
+	free(strBuf);
+}
+
+int main(int argc, char** argv)
 {
 	/* Init NCurses */
 	WINDOW* stdscr = initCurses();
@@ -47,12 +100,18 @@ int main()
 	uint64_t start, end;
 	gettimeofday(&tv, NULL);
 	start = tv.tv_sec * 1000 + tv.tv_usec/1000;
+	char* scoreFileName = "Snake.bin";
 
 	/* Game Movement and Scores */
 	int16_t move = KEY_DOWN;
 	uint16_t score = 0;
 	int16_t c = 0x00;
 	int16_t foodCollision = -1;	
+
+	/*endScreen(stdscr, atoi(argv[1]), scoreFileName);
+	endwin();
+	return -1;
+	*/
 
 	/* Game Menu */
 	Menu m = initMenu(stdscr, 3);
@@ -77,7 +136,6 @@ int main()
 			freeFood(&food);
 			freeMenu(&m);
 			endwin();
-			_nc_free_and_exit();
 			return 0;
 	}
 	freeMenu(&m);
@@ -139,6 +197,10 @@ int main()
 			start = end;
 		}
 	}
+
+	/* End Screen */
+	endScreen(stdscr, score, scoreFileName);
+
 	/* Release Memory */
 	freeSnake(&snake);
 	freeFood(&food);

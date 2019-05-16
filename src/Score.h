@@ -3,6 +3,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <stdint.h>
 
 /* Structs */
 /* Struct to hold a specific score */
@@ -75,4 +76,35 @@ void readScore(ScoreArray *SA)
 		fread(&SA->arr[i].score, sizeof(uint16_t), 1, f);
 	}
 	fclose(f);
+}
+
+/* Adds a given score to the array at given position */
+void insertScore(ScoreArray *SA, uint8_t index, uint16_t score, char* name, uint8_t nameSize)
+{
+	for(uint8_t i = SA->size - 1; i > index; i--)
+	{
+		if(i == SA->size - 1)
+			continue;
+		else
+			SA->arr[i-1] = SA->arr[i];
+	}
+	if(index < SA->size)
+	{
+		SA->arr[index].score = score;
+		memcpy(SA->arr[index].name, name, strlen(name));
+		SA->arr[index].nameSize = nameSize;
+	}
+}	
+
+/* Returns the place of given score on board, or, the size of the scoreboard (an invalid index) if the score
+ * isn't on the scoreboard
+ */
+uint8_t rankScore(ScoreArray *SA, uint16_t score)
+{
+	for(uint8_t i = 0; i < SA->size; i++)
+	{
+		if(SA->arr[i].score < score)
+			return i;
+	}
+	return SA->size;
 }
