@@ -63,7 +63,8 @@ void endScreen(WINDOW* win, uint16_t score, char* fileName)
 		sprintf(strlen(strBuf) + strBuf, 0x00);
 		werase(win);
 		insertScore(&scores, rank, score, strBuf, strlen(strBuf));
-		mvwaddstr(win, h/2-1, w/2 - strlen(strBuf), strBuf);
+		storeScore(&scores);
+		//mvwaddstr(win, h/2-1, w/2 - strlen(strBuf), strBuf);
 		for(uint8_t i = 0; i < scores.size; i++)
 		{
 			memset(strBuf, 0x00, 256);

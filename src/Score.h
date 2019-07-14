@@ -52,7 +52,7 @@ void storeScore(ScoreArray* SA)
 	FILE *f = fopen(SA->fileName, "wb");
 	fwrite(&SA->size, sizeof(uint8_t), 1, f);
 	freeScoreArray(SA);
-	SA->arr = (Score*)malloc(sizeof(Score)*SA->size);
+	//SA->arr = (Score*)malloc(sizeof(Score)*SA->size);
 	for(uint8_t i = 0; i < SA->size; i++)
 	{
 		fwrite(&SA->arr[i].nameSize, sizeof(uint8_t), 1, f);
@@ -81,17 +81,14 @@ void readScore(ScoreArray *SA)
 /* Adds a given score to the array at given position */
 void insertScore(ScoreArray *SA, uint8_t index, uint16_t score, char* name, uint8_t nameSize)
 {
-	for(uint8_t i = SA->size - 1; i > index; i--)
+	for(uint8_t i = SA->size - 2; i > index; i--)
 	{
-		if(i == SA->size - 1)
-			continue;
-		else
-			SA->arr[i-1] = SA->arr[i];
+		SA->arr[i-1] = SA->arr[i];
 	}
 	if(index < SA->size)
 	{
 		SA->arr[index].score = score;
-		memcpy(SA->arr[index].name, name, strlen(name));
+		SA->arr[index].name = name;
 		SA->arr[index].nameSize = nameSize;
 	}
 }	
